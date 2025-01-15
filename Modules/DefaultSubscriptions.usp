@@ -1,0 +1,85 @@
+#DEFINE_CONSTANT NumberOfDecoders 11
+//The following constant determines the number of bytes the number of the decoders uses, 2 can be used when there are less than 100 decoders and less than 100 encoders. 3 can
+//be used when there are less than 1000 encoders and less than 1000 decoders
+#DEFINE_CONSTANT NumberOfBytes 2
+//The following constant determines the number of bytes each line will have. To determine this use the following example:
+//output01=01  - (output =6) + (01  =2) + (= =1) + (01 =2) +(\n =1) + (CR =1), if the number number of devices where to go to 3 digits, it would be 15
+#DEFINE_CONSTANT NumberOfBytesPerLine 13
+DIGITAL_INPUT set_default, read_default;
+ANALOG_INPUT subscriptions[NumberOfDecoders];
+ANALOG_OUTPUT subscriptions_set[NumberOfDecoders];
+INTEGER i;
+SIGNED_INTEGER nFileHandle;
+STRING number_temp[NumberOfBytes];
+STRING sBuf[4096];
+STRING line[NumberOfBytesPerLine];
+STRING number_input[NumberOfBytes];
+STRING number_output[NumberOfBytes];
+STRING number_output_write[NumberOfBytes];
+STRING number_input_write[NumberOfBytes];
+
+//If the number is less than 10, convert it to a string and add "0" before it to maintain the size of the line
+STRING_FUNCTION AddZerosBeforeNumber(INTEGER nr) {
+  STRING nr_n[2];
+  print("%d",nr);
+  IF (nr < 10) {
+        nr_n = "0"+itoa(nr);
+      } ELSE {
+        nr_n = itoa(nr);
+      }
+  return (nr_n);
+}
+
+PUSH set_default {
+  StartFileOperations();
+  //Open the file as text, IF the file doesn't exist, then create it otherwise erase the content of the file
+  nFileHandle = FileOpenShared("\\Internal Flash\\ftp\\User\\defaults.txt", _O_TEXT | _O_WRONLY | _O_CREAT | _O_TRUNC) ;
+
+  IF (nFileHandle < 0){
+    PRINT("Error Opening File MyFile\n");
+    }
+  ELSE {
+    //For each decoder in the system, add its details to the file
+    for(i=1 to NumberOfDecoders) {
+      //Get the numbers of the input and output in the correct form
+      number_output_write=AddZerosBeforeNumber(i);
+      number_input_write=AddZerosBeforeNumber(subscriptions[i]);
+      //create the line to be written to the file
+      sBuf = "output"+ number_output_write +"="+number_input_write +"\n";
+      print("Line: %s",sBuf);
+      //write the line to the file
+      FileWrite(nFileHandle,sBuf,4096);
+    }
+    //Close the file
+    FileClose(nFileHandle);
+  }
+  EndFileOperations();
+}
+
+//get the defaults from the defaults.txt file
+PUSH read_default {
+  StartFileOperations();
+  nFileHandle = FileOpenShared("\\Internal Flash\\ftp\\User\\defaults.txt", _O_TEXT | _O_RDONLY) ;
+  IF (nFileHandle < 0)
+      {
+      PRINT("Error Opening File MyFile\n");
+        }
+    ELSE {
+      //while there is data in the file, process the data
+        WHILE(FileRead(nFileHandle,line,NumberOfBytesPerLine) > 0) {
+          number_output= mid(line,find("=", line)+1,NumberOfBytes);
+          number_input=mid(line,7,NumberOfBytes);
+          //print("Number output: %s\n", number_output);
+          //print("Number input: %s\n", number_input);
+          //set the subscription of the decoder to the appropriate subscription number
+          subscriptions_set[atoi(number_input)] = atoi(number_output);
+        }
+      }
+
+  FileClose(nFileHandle);
+  EndFileOperations();
+}
+
+
+
+

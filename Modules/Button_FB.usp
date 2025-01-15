@@ -1,0 +1,14 @@
+#DEFINE_CONSTANT NumberOfDecoders 11
+ANALOG_INPUT CurrentInput, CurrentSourceOfDecoder[NumberOfDecoders];
+DIGITAL_OUTPUT  outputFb[NumberOfDecoders];
+DIGITAL_INPUT timer;
+INTEGER i;
+PUSH timer {
+    for(i=1 to NumberOfDecoders) {
+        if(currentInput=CurrentSourceOfDecoder[i]) {
+            outputFb[i] = 1;
+        } else {
+            outputFb[i] = 0;
+        }
+    }
+}

@@ -1,0 +1,14 @@
+#DEFINE_CONSTANT NumberOfDecoders 11
+ANALOG_INPUT CurrentInput;
+DIGITAL_INPUT OutputButtonPressed[NumberOfDecoders];
+ANALOG_OUTPUT subscriptions[NumberOfDecoders];
+INTEGER i;                            
+CHANGE OutputButtonPressed{
+    for(i = 1 to NumberOfDecoders) {
+        if(OutputButtonPressed[i]=1) {
+            subscriptions[i]=CurrentInput;  
+        }
+    }
+}
+
+
