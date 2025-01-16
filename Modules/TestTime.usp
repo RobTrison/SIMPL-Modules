@@ -1,0 +1,21 @@
+DIGITAL_INPUT di_Input;
+LONG_INTEGER li_StartTime;
+LONG_INTEGER li_EndTime;
+LONG_INTEGER li_Duration;
+
+CHANGE di_Input
+{
+    IF (di_Input)
+    {
+        // Input just went high, record the start time
+        li_StartTime = GetSysTime(); 
+    }
+    ELSE
+    {
+        // Input just went low, record the end time and calculate duration
+        li_EndTime = GetSysTime();
+        li_Duration = li_EndTime - li_StartTime;
+
+        PRINT("Signal was high for %ld milliseconds\n", li_Duration);
+    }
+}

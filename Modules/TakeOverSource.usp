@@ -1,7 +1,7 @@
 //The following constant represents the number of decoders in the system
 #DEFINE_CONSTANT NumberOfDecoders 11
 //The following constant represents the number of the subscription that needs to take over
-#DEFINE_CONSTANT TakeOverInput 7 
+#DEFINE_CONSTANT TakeOverInput 7
 DIGITAL_INPUT TakeOverSignalDetected;
 ANALOG_OUTPUT subscriptions[NumberOfDecoders];
 ANALOG_INPUT current_subscriptions[NumberOfDecoders];
