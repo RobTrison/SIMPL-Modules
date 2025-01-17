@@ -5,9 +5,26 @@
 //The following constant determines the number of bytes each line will have. To determine this use the following example:
 //output01=01  - (output =6) + (01  =2) + (= =1) + (01 =2) +(\n =1) + (CR =1), if the number number of devices where to go to 3 digits, it would be 15
 #DEFINE_CONSTANT NumberOfBytesPerLine 13
-DIGITAL_INPUT set_default, read_default;
+//The following constant determines the number of seconds that the button needs to be pressed for until the new presets are saved to local storage
+#DEFINE_CONSTANT TicksPerSecond 1000
+STRING_INPUT time_string[100];
+DIGITAL_INPUT read_default;
 ANALOG_INPUT subscriptions[NumberOfDecoders];
-ANALOG_OUTPUT subscriptions_set[NumberOfDecoders];
+
+DIGITAL_OUTPUT showPresetsMessage;
+ANALOG_OUTPUT _skip_,_skip_,subscriptions_set[NumberOfDecoders];
+//
+
+
+integer_parameter _skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,HoldTreshold;
+#BEGIN_PARAMETER_PROPERTIES HoldTreshold
+  propValidUnits = unitDecimal;
+  propBounds = 1d,100d;
+  propDefaultValue = 5d;
+  propShortDescription = "Time to press";
+#END_PARAMETER_PROPERTIES
+
+//
 INTEGER i;
 SIGNED_INTEGER nFileHandle;
 STRING number_temp[NumberOfBytes];
@@ -17,7 +34,8 @@ STRING number_input[NumberOfBytes];
 STRING number_output[NumberOfBytes];
 STRING number_output_write[NumberOfBytes];
 STRING number_input_write[NumberOfBytes];
-
+//
+integer elapsedSeconds, timeStart, timeEnd, loop;
 //If the number is less than 10, convert it to a string and add "0" before it to maintain the size of the line
 STRING_FUNCTION AddZerosBeforeNumber(INTEGER nr) {
   STRING nr_n[2];
@@ -30,7 +48,7 @@ STRING_FUNCTION AddZerosBeforeNumber(INTEGER nr) {
   return (nr_n);
 }
 
-PUSH set_default {
+FUNCTION set_default_fnc() {
   StartFileOperations();
   //Open the file as text, IF the file doesn't exist, then create it otherwise erase the content of the file
   nFileHandle = FileOpenShared("\\Internal Flash\\ftp\\User\\defaults.txt", _O_TEXT | _O_WRONLY | _O_CREAT | _O_TRUNC) ;
@@ -57,7 +75,7 @@ PUSH set_default {
 }
 
 //get the defaults from the defaults.txt file
-PUSH read_default {
+FUNCTION read_default_fnc() {
   StartFileOperations();
   nFileHandle = FileOpenShared("\\Internal Flash\\ftp\\User\\defaults.txt", _O_TEXT | _O_RDONLY) ;
   IF (nFileHandle < 0)
@@ -80,6 +98,40 @@ PUSH read_default {
   EndFileOperations();
 }
 
+Integer_Function CheckTimeElapsed(INTEGER timeEnd) {
+  if((timeEnd - timeStart) > HoldTreshold) {
+    return (1);
+  } else {
+    return (0);
+  }
+}
+PUSH read_default{ 
+  timeStart = atoi(mid(time_string,11,4));
+  WHILE(read_default) {
+	WAIT(250){
+    timeEnd = atoi(mid(time_string,11,4));
+    if (CheckTimeElapsed(timeEnd) > 0){
+      set_default_fnc();
+      showPresetsMessage = 1;
+      showPresetsMessage = 0;
+    }
+    }
+  } 
+  if (CheckTimeElapsed(timeEnd)=0) {
+    read_default_fnc();
+  }
+} 
 
 
 
+// RELEASE read_default{
+//   timeEnd = atoi(mid(time_string,11,4));
+//   elapsedSeconds = timeEnd - timeStart;
+//   if (elapsedSeconds < HoldTreshold) {
+//     read_default_fnc();
+//   } else {
+//     set_default_fnc();
+//     showPresetsMessage = 1;
+//     showPresetsMessage = 0;
+//   }
+// }
